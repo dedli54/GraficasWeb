@@ -1,0 +1,74 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background-image: url('fondo_verde.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.container{
+    background-color: rgba(14, 23, 13, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 80%;
+    width: 60%;
+}
+.container input{
+display: block;
+}
+
+#logo_juego{
+    width: 90%;
+    position: relative;
+}
+.buttons_menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around; /* Para espaciar los botones uniformemente */
+    align-items: center; /* Para alinear verticalmente los botones */
+    width: 100%; /* Asegúrate de que los botones ocupen todo el ancho */
+}
+.imagen_button {
+    display: block; /* Convertir el enlace en un bloque para ocupar todo el ancho */
+    margin-bottom: 10px; /* Espacio entre los botones */
+}
+#Title{
+    color: white;
+    
+}
+     /* Estilo básico para hacer visible el modal */
+     .modal {
+        display: none; /* Oculto por defecto */
+        position: fixed;
+        text-align: center;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4); /* Fondo oscuro semitransparente */
+      }
+      
+      .modal-dialog {
+        position: relative;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 600px;
+        background-color: rgba(0, 0, 0, 0.4); /* Fondo transparente */
+      
+      }
+    
+      .modal-content {
+        padding: 20px;
+        border-radius: 5px;
+      }

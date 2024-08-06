@@ -1,0 +1,55 @@
+body{
+    margin: 0;
+    padding: 0;
+    background: url(Background.jpg);
+    background-size: cover;
+    background-position: center;
+}
+.container{
+    background: white;   
+    width: 90%;
+    height: 90%;
+    margin: 30px auto;
+    font-family: "Federo", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+label{
+    color:rgb(18, 236, 200);
+    size: 3em;
+}
+#pefil{ 
+    margin: 10px 5px;
+    height: 30px;
+    width: 30px;
+}
+#nombreUsuario{
+    background: none;
+    border:none;
+    outline: none;
+}
+
+.icon{
+    height: 30px;
+    width: 30px;
+}
+
+.segundaColumna{
+    margin: 20px auto;
+    text-align: right;
+}
+
+.classtarget{
+    text-align: center;
+    margin: 15% auto;
+   
+}
+.target{
+    height: 60px;
+    width: 60px;
+}
+.classmunicion{
+    text-align: right;
+    padding-top: 60px;
+    margin: auto;
+}
