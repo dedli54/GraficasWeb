@@ -11,3 +11,5 @@ CREATE TABLE loged (
     correo VARCHAR(255) NOT NULL,
     fechaNacimiento DATE NOT NULL
 );
+
+SELECT * FROM loged;
