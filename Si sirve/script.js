@@ -60,7 +60,7 @@ function resumeGame2() {
     document.getElementById('loginmenu').classList.add('hide');
 }
 
-function showfacebook() {
+/*function showfacebook() {
     const facebookTable = document.getElementById('facebooktable');
     if (facebookTable.classList.contains('hide')) {
         // Si está oculto, mostrarlo
@@ -69,7 +69,7 @@ function showfacebook() {
         // Si está visible, ocultarlo
         facebookTable.classList.add('hide');
     }
-}
+}*/
 
 
 
