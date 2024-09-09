@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juego</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      margin: 0;
+      
+    }
+  </style>
+</head>
+
+<body>
+  <div id="gamemode" class="gamemode">
+    <button onclick="gamemode()" id="button-versus" class="button-start-versus">Versus</button>
+    <button onclick="gamemode()" id="button-classic" class="button-start-classic">Classic</button>
+  </div>
+    <!-- Contador de puntos para el jugador 1 -->
+    <div id="player1Score" class="score1">Puntos Jugador 1: <span id="player1Points">0</span></div>
+
+    <!-- Contador de puntos para el jugador 2 -->
+    <div id="player2Score" class="score2">Puntos Jugador 2: <span id="player2Points">0</span></div>
+
+    <div id="timer" class="timer">Tiempo restante: <span id="timeLeft">180</span> segundos</div>
+
+    <!-- Mensaje del ganador -->
+    <div id="winnerMessage" class="winner-message" style="display: none;"></div>
+    <button id="button-login" style="display:none;" class="button-login">Login</button>
+
+    
+
+  <button onclick="pauseGame()" class="pause-button">🏠</button>
+  <div id="pauseMenu" class="pause-menu hide">
+    <button onclick="resumeGame()" id="pausmeMenuButton">Continuar</button>
+    <br>
+    <button onclick="quitGame()" id="pausmeMenuButton">Salir</button>
+  </div>
+  <script type="module">
+    import * as THREE from "./three.module.js";
+    import { OrbitControls } from "./OrbitControls.js";
+    import { GLTFLoader } from "./GLTFLoader.js";
+
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js"
+import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js"
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyB6ZBUO4LTlgALjArU3EVAS2QPNYP9HKdg",
+  authDomain: "graficasweb-65529.firebaseapp.com",
+  databaseURL: "https://graficasweb-65529-default-rtdb.firebaseio.com",
+  projectId: "graficasweb-65529",
+  storageBucket: "graficasweb-65529.appspot.com",
+  messagingSenderId: "758709726020",
+  appId: "1:758709726020:web:e69aa24c91f26bad23c511"
+};
+
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+const db = getDatabase();
+const buttonLogin = document.getElementById("button-login");
+const buttonclassic = document.getElementById("button-classic");
+let currentUser = {};//puede cambiar a const
+//Login
+buttonLogin.addEventListener("click", async () => {
+  await signInWithPopup(auth, provider)
+  .then((result) => {
+    // This gives you a Google Access Token. You can use it to access the Google API.
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    const token = credential.accessToken;
+    // The signed-in user info.
+    currentUser = result.user;
+   
+    const player1Points = parseInt(document.getElementById('player1Points').innerText);
+    const player2Points = parseInt(document.getElementById('player2Points').innerText);
+
+    let winnerPoints;
+
+    if (player1Points > player2Points) {
+      winnerPoints = player1Points;
+    } else {
+      winnerPoints = player2Points;
+    }
+    
+    console.log(currentUser);
+    writeUserData(currentUser.uid,currentUser.email,winnerPoints);
+    console.log("Se logro");
+
+  }).catch((error) => {
+    // Handle Errors here.
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    // The email of the user's account used.
+    const email = error.customData.email;
+    // The AuthCredential type that was used.
+    const credential = GoogleAuthProvider.credentialFromError(error);
+    // ...
+  });
+})
+
+
+let isClassicMode = false;
+
+
+function switchToClassicMode() {
+  isClassicMode = true;
+  console.log("activado");
+}
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color("#566573");
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight
+    );
+    camera.position.set(0, 0, 10);
+    buttonclassic.addEventListener("click", function() {
+  switchToClassicMode();
+});
+
+
+    const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+    scene.add(hemisphereLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(1, 5, -1);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const cameraControl = new OrbitControls(camera, renderer.domElement);
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    const audioLoader = new THREE.AudioLoader();
+
+    const backgroundSound = new THREE.Audio(listener);
+    const hitSound = new THREE.Audio(listener);
+
+    audioLoader.load('./background.mp3', function (buffer) {
+      backgroundSound.setBuffer(buffer);
+      backgroundSound.setLoop(true);
+      backgroundSound.play();
+    });
+
+    audioLoader.load('./hitsound.mp3', function (buffer) {
+      hitSound.setBuffer(buffer);
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const isMuted = JSON.parse(localStorage.getItem('soundMuted'));
+      if (isMuted) {
+        backgroundSound.setVolume(0.0);
+        hitSound.setVolume(0.0);
+      } else {
+        backgroundSound.setVolume(0.1);
+        hitSound.setVolume(0.4);
+      }
+    });
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.render(scene, camera);
+      console.log("resize");
+
+
+    }
+
+    window.addEventListener("resize", resize)
+
+    let mixer;
+    let idleAction; // Acción de la pose inicial
+    let walkAction; // Acción de la animación de caminar
+    let walkBackAction;
+    let walkLeftAction;
+    let walkRightAction;
+    let throwfrancaction;
+
+
+    let mixer2;
+    let idleAction2;
+    let walkAction2;
+    let walkBackAction2;
+    let walkLeftAction2;
+    let walkRightAction2;
+    let throwfrancaction2;
+    
+
+    let objeto;
+    let objeto2;
+    let pelota;
+    let pelota2;
+
+    let powerup1;
+    let powerup2;
+    let powerup3;
+
+    let player1Score = 0;
+    let player2Score = 0;
+
+
+    let velocidadplus = false;
+    let dobletiro = false;
+    let invencibilidad = false;
+
+    let tiempoInvulnerabilidad = 10; // Duración en segundos de la invulnerabilidad
+    let tiempoMultiplicadorPuntos = 5; // Duración en segundos del multiplicador de puntos
+    let tiempoAumentoVelocidad = 5;
+
+    let isPaused = false;
+    
+    const loaderGLTF = new GLTFLoader();
+
+    function loadModelAndPlayAnimation() {
+     
+      loaderGLTF.load('./models/FrankFINALPOSE.glb', function (modelGLTF) {
+        objeto = modelGLTF.scene;
+        scene.add(objeto);
+        objeto.position.set(0, 0, -20);
+        mixer = new THREE.AnimationMixer(objeto);
+        const loaderWalk = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderWalk.load('./models/FrankFINALWALK.glb', function (animGLTF) {
+          const animClip = animGLTF.animations[0];
+          walkAction = mixer.clipAction(animClip); 
+        });
+
+        const loaderBackWalk = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderBackWalk.load('./models/FRANKWALKBACK.glb', function (animGLTF) {
+          const animClip = animGLTF.animations[0];
+          walkBackAction = mixer.clipAction(animClip); // Almacena la acción de la animación de caminar
+        });
+
+        const loaderSideLWalk = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderSideLWalk.load('./models/FRANKLEFTWALK.glb', function (animGLTF) {
+          const animClip = animGLTF.animations[0];
+          walkLeftAction = mixer.clipAction(animClip); 
+        });
+
+        const loaderSideRWalk = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderSideRWalk.load('./models/FRANKRIGHTWALK.glb', function (animGLTF) {
+          const animClip = animGLTF.animations[0];
+          walkRightAction = mixer.clipAction(animClip); 
+        });
+
+        const loaderthrowfrank= new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderthrowfrank.load('./models/FRANKTHROW.glb', function (animGLTF) {
+          const animClip = animGLTF.animations[0];
+          throwfrancaction = mixer.clipAction(animClip); 
+        });
+
+        const loaderidle = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderidle.load('./models/IDLEFRANK.glb', function (animGLTF) {
+          const animClip = animGLTF.animations[0];
+          idleAction = mixer.clipAction(animClip); // Almacena la acción de la animación de caminar
+          idleAction.play(); // Reproducir la animación de caminar de forma predeterminada
+        });
+      });
+
+
+
+
+      loaderGLTF.load('./models/FrankFINALPOSE.glb', function (modelGLTF) {
+        objeto2 = modelGLTF.scene;
+        scene.add(objeto2);
+        objeto2.position.set(0, 0, 20);
+        objeto2.rotateY(Math.PI);
+        mixer2 = new THREE.AnimationMixer(objeto2);
+        const loaderWalk2 = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderWalk2.load('./models/FrankFINALWALK.glb', function (animGLTF) {
+          const animClip2 = animGLTF.animations[0];
+          walkAction2 = mixer2.clipAction(animClip2); 
+        });
+
+        const loaderBackWalk2 = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderBackWalk2.load('./models/FRANKWALKBACK.glb', function (animGLTF) {
+          const animClip2 = animGLTF.animations[0];
+          walkBackAction2 = mixer2.clipAction(animClip2); // Almacena la acción de la animación de caminar
+        });
+
+        const loaderSideLWalk2 = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderSideLWalk2.load('./models/FRANKLEFTWALK.glb', function (animGLTF) {
+          const animClip2 = animGLTF.animations[0];
+          walkLeftAction2 = mixer2.clipAction(animClip2); 
+        });
+
+        const loaderSideRWalk2 = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderSideRWalk2.load('./models/FRANKRIGHTWALK.glb', function (animGLTF) {
+          const animClip2 = animGLTF.animations[0];
+          walkRightAction2 = mixer2.clipAction(animClip2); 
+        });
+
+        const loaderthrowfrank2= new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderthrowfrank2.load('./models/FRANKTHROW.glb', function (animGLTF) {
+          const animClip2 = animGLTF.animations[0];
+          throwfrancaction2 = mixer2.clipAction(animClip2); 
+        });
+
+        const loaderidle2 = new GLTFLoader(); // Nuevo cargador para la animación de caminar
+        loaderidle2.load('./models/IDLEFRANK.glb', function (animGLTF) {
+          const animClip2 = animGLTF.animations[0];
+          idleAction2 = mixer2.clipAction(animClip2); // Almacena la acción de la animación de caminar
+          idleAction2.play(); // Reproducir la animación de caminar de forma predeterminada
+        });
+      });
+
+
+
+      loaderGLTF.load('./models/yellowcube/cuboamarilloglb.glb', function (modelGLTF) {
+        powerup1 = modelGLTF.scene;
+        scene.add(powerup1);
+        // Posiciona el segundo personaje como desees
+        powerup1.position.set(10, 0, -15);
+      });
+
+      loaderGLTF.load('./models/yellowcube/cuboamarilloglb.glb', function (modelGLTF) {
+        powerup2 = modelGLTF.scene;
+        scene.add(powerup2);
+        // Posiciona el segundo personaje como desees
+        powerup2.position.set(-10, 0, 15);
+      });
+
+      loaderGLTF.load('./models/yellowcube/cuboamarilloglb.glb', function (modelGLTF) {
+        powerup3 = modelGLTF.scene;
+        scene.add(powerup3);
+        // Posiciona el segundo personaje como desees
+        powerup3.position.set(10, 0, 15);
+      });
+
+      loaderGLTF.load('./models/island/isla.glb', function (modelGLTF) {
+        const isla = modelGLTF.scene;
+        scene.add(isla);
+        isla.position.set(0, 0, 0);
+      });
+
+      loaderGLTF.load('./models/volleyball/pelota.glb', function (modelGLTF) {
+        pelota = modelGLTF.scene;
+        scene.add(pelota);
+        pelota.position.set(50, -5, 50);
+        pelota.scale.set(0.5, 0.5, 0.5);
+       // pelota.visible = false;
+      });
+
+      loaderGLTF.load('./models/volleyball/pelota.glb', function (modelGLTF) {
+        pelota2 = modelGLTF.scene;
+        scene.add(pelota2);
+        pelota2.position.set(50, -5, 50);
+        pelota2.scale.set(0.5, 0.5, 0.5);
+       // pelota2.visible = false;
+      });
+
+      
+    }
+
+    loadModelAndPlayAnimation();
+
+    // Mantén un registro de qué teclas están siendo presionadas para cada personaje
+let player1Keys = {
+  w: false,
+  s: false,
+  a: false,
+  d: false,
+  g: false
+};
+
+let player2Keys = {
+  ArrowUp: false,
+  ArrowDown: false,
+  ArrowLeft: false,
+  ArrowRight: false,
+  m: false
+};
+let speed =0.5;
+// Actualiza las posiciones de los personajes en función de las teclas presionadas
+function updateCharactersPositions() {
+  
+  // Personaje 1
+  if (player1Keys.w && mixer && objeto) {
+    walkAction.play();
+    objeto.position.z += speed;
+  }
+  if (player1Keys.s && mixer && objeto) {
+    walkBackAction.play();
+    objeto.position.z -= speed;
+  }
+  if (player1Keys.a && objeto && mixer) {
+    walkLeftAction.play();
+    objeto.position.x += speed;
+  }
+  if (player1Keys.d && objeto && mixer) {
+    walkRightAction.play();
+    objeto.position.x -= speed;
+  }
+  if (player1Keys.g && objeto && mixer) {
+    throwfrancaction.reset(); // Resetea la acción de lanzamiento
+    throwfrancaction.setLoop(THREE.LoopOnce); // Establece el modo de bucle para reproducir una vez
+    throwfrancaction.play();
+    const direction = new THREE.Vector3(0, 0, -1);
+    throwBallFromPlayer(objeto, direction);
+  }
+
+  // Personaje 2
+  if (player2Keys.ArrowUp && objeto2 && mixer2) {
+    walkAction2.play();
+    objeto2.position.z -= speed;
+  }
+  if (player2Keys.ArrowDown && objeto2 && mixer2) {
+    walkBackAction2.play();
+    objeto2.position.z += speed;
+  }
+  if (player2Keys.ArrowLeft && objeto2 && mixer2) {
+    walkLeftAction2.play();
+    objeto2.position.x += speed;
+  }
+  if (player2Keys.ArrowRight && objeto2 && mixer2) {
+    walkRightAction2.play();
+    objeto2.position.x -= speed;
+  }
+  if (player2Keys.m && objeto2 && mixer2 && !isClassicMode) {
+    throwfrancaction2.reset(); // Resetea la acción de lanzamiento
+    throwfrancaction2.setLoop(THREE.LoopOnce); // Establece el modo de bucle para reproducir una vez
+    throwfrancaction2.play();
+    const direction = new THREE.Vector3(0, 0, 1);
+    throwBallFromPlayer2(objeto2, direction);
+  }
+}
+
+// Maneja eventos de teclado para ambos personajes
+document.addEventListener("keydown", function (event) {
+  // Player 1
+  if (event.key in player1Keys) {
+    player1Keys[event.key] = true;
+  }
+  
+  // Player 2
+  if (event.key in player2Keys) {
+    player2Keys[event.key] = true;
+  }
+});
+
+document.addEventListener("keyup", function (event) {
+  // Player 1
+  if (event.key in player1Keys) {
+    player1Keys[event.key] = false;
+    stopPlayer1Animations();
+  }
+  
+  // Player 2
+  if (event.key in player2Keys) {
+    player2Keys[event.key] = false;
+    stopPlayer2Animations();
+  }
+});
+
+// Función para detener las animaciones del Player 1
+function stopPlayer1Animations() {
+  walkAction.stop();
+  walkBackAction.stop();
+  walkLeftAction.stop();
+  walkRightAction.stop();
+}
+
+// Función para detener las animaciones del Player 2
+function stopPlayer2Animations() {
+  walkAction2.stop();
+  walkBackAction2.stop();
+  walkLeftAction2.stop();
+  walkRightAction2.stop();
+  // Agrega aquí las demás animaciones del Player 2 si es necesario
+}
+
+let avento = false;
+let distanceToTravel;
+let distanceToTravel2;
+
+function throwBallFromPlayer(player, direction) {
+    if (player && direction) {
+        const startPosition = player.position.clone();
+        pelota.position.copy(startPosition);
+        pelota.position.y=pelota.position.y+3;
+        pelota.visible = true;
+
+        const speed = 3;
+        distanceToTravel = 200;
+        const deltaZ = -speed;
+        const velocity = direction.multiplyScalar(deltaZ);
+
+        function throwBall() {
+            if (pelota) {
+                pelota.position.add(velocity);
+                distanceToTravel -= speed;
+                if (distanceToTravel <= 0) {
+                    pelota.visible = false;
+                } else {
+                    requestAnimationFrame(throwBall);
+                }
+            }
+        }
+
+        throwBall();
+    }
+}
+
+function throwBallFromPlayer2(player, direction) {
+    if (player && direction) {
+        const startPosition = player.position.clone();
+        pelota2.position.copy(startPosition);
+        pelota2.position.y=pelota2.position.y+3;
+        pelota2.visible = true;
+
+        const speed2 = 3;
+        distanceToTravel2 = 200;
+        const deltaZ2 = -speed2;
+        const velocity2 = direction.multiplyScalar(deltaZ2);
+
+        function throwBall() {
+            if (pelota2) {
+                pelota2.position.add(velocity2);
+                distanceToTravel2 -= speed2;
+                if (distanceToTravel2 <= 0) {
+                    pelota2.visible = false;
+                } else {
+                    requestAnimationFrame(throwBall);
+                }
+            }
+        }
+
+        throwBall();
+    }
+}
+let collisiondetected = false;
+
+
+function checkCollisions() {
+  if (powerup1 && objeto) {
+        const distanciaMinima = 5; // Ajustar según sea necesario
+        const distanciaX = Math.abs(powerup1.position.x - objeto.position.x);
+        const distanciaZ = Math.abs(powerup1.position.z - objeto.position.z);
+        if (distanciaX < distanciaMinima && distanciaZ < distanciaMinima) {
+            console.log('eres invulnerable!');
+            powerup1.position.x +=50;
+            powerup1.visible = false;
+            invencibilidad =true;
+            setTimeout(() => {
+                invencibilidad = false;
+                console.log("yano")
+            }, tiempoInvulnerabilidad * 1000);
+            // Agregar aquí las acciones que desees al colisionar con powerup1
+        }
+    }
+
+    // Verificar colisión entre objeto2 (personaje 2) y powerup2
+    if (powerup2 && objeto2) {
+        const distanciaMinima = 5; // Ajustar según sea necesario
+        const distanciaX = Math.abs(powerup2.position.x - objeto2.position.x);
+        const distanciaZ = Math.abs(powerup2.position.z - objeto2.position.z);
+        if (distanciaX < distanciaMinima && distanciaZ < distanciaMinima) {
+            console.log('tirox2!');
+            powerup2.position.x +=50;
+            powerup2.visible = false;
+            dobletiro = true;
+            setTimeout(() => {
+                dobletiro = false;
+                console.log("yano")
+            }, tiempoMultiplicadorPuntos * 1000);
+            // Agregar aquí las acciones que desees al colisionar con powerup2
+        }
+    }
+
+    // Verificar colisión entre objeto2 (personaje 2) y powerup3
+    if (powerup3 && objeto2) {
+        const distanciaMinima = 5; // Ajustar según sea necesario
+        const distanciaX = Math.abs(powerup3.position.x - objeto2.position.x);
+        const distanciaZ = Math.abs(powerup3.position.z - objeto2.position.z);
+        if (distanciaX < distanciaMinima && distanciaZ < distanciaMinima) {
+            console.log('¡Colisión detectada con powerup3!');
+            powerup3.position.x +=50;
+            powerup3.visible = false;
+            speed = 1.5;
+            setTimeout(() => {
+              speed = 0.5;
+            }, tiempoAumentoVelocidad * 1000);
+            // Agregar aquí las acciones que desees al colisionar con powerup3
+        }
+    }
+
+    if (pelota  && objeto2) {
+        // Obtener las posiciones X y Z de la pelota y el modelo del personaje
+        const pelotaX = pelota.position.x;
+        const pelotaZ = pelota.position.z;
+        const objeto2X = objeto2.position.x;
+        const objeto2Z = objeto2.position.z;
+
+        // Definir una distancia mínima para considerar una colisión
+        const distanciaMinima = 5; // Ajusta según sea necesario
+
+        // Verificar si la diferencia en las posiciones X y Z está dentro de la distancia mínima
+        const distanciaX = Math.abs(pelotaX - objeto2X);
+        const distanciaZ = Math.abs(pelotaZ - objeto2Z);
+
+        if (distanciaX < distanciaMinima && distanciaZ < distanciaMinima ) {
+          hitSound.play();
+            // Manejar la colisión aquí
+            console.log('¡Colisión detectada con objeto2!');
+            pelota.visible = false;
+            player1Score +=1;
+            document.getElementById('player1Points').textContent = player1Score;
+            console.log(player1Score)
+          //  collisiondetected =true;
+        }
+    }
+
+    if (pelota2  && objeto && !invencibilidad) {
+        // Obtener las posiciones X y Z de la pelota y el modelo del personaje
+        const pelota2X = pelota2.position.x;
+        const pelota2Z = pelota2.position.z;
+        const objetoX = objeto.position.x;
+        const objetoZ = objeto.position.z;
+
+        // Definir una distancia mínima para considerar una colisión
+        const distanciaMinima = 5; // Ajusta según sea necesario
+
+        // Verificar si la diferencia en las posiciones X y Z está dentro de la distancia mínima
+        const distanciaX = Math.abs(pelota2X - objetoX);
+        const distanciaZ = Math.abs(pelota2Z - objetoZ);
+
+        if (distanciaX < distanciaMinima && distanciaZ < distanciaMinima) {
+          hitSound.play();
+            // Manejar la colisión aquí
+            console.log('¡Colisión detectada con objeto!');
+            pelota2.visible = false;
+            if(dobletiro){
+              player2Score +=2;
+            }else{
+              player2Score +=1;
+            }
+            document.getElementById('player2Points').textContent = player2Score;
+            console.log(player2Score)
+           // collisiondetected = true;
+            
+        }
+    }
+}
+
+const distanceThreshold = 1; 
+let distanceToPlayer;
+
+// Llama a esta función en tu bucle de animación
+function animate() {
+  requestAnimationFrame(animate);
+  if (mixer) mixer.update(0.09);
+  if(mixer2) mixer2.update(0.09);
+  updateCharactersPositions(); // Actualiza las posiciones de los personajes
+  checkCollisions();
+  renderer.render(scene, camera);
+}
+
+
+
+    animate();
+    let timeLeft = 10; // 180 segundos = 3 minutos
+    const timerElement = document.getElementById('timeLeft');
+
+    const timer = setInterval(() => {
+      if (isPaused) return;
+      timeLeft--;
+      timerElement.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        endGame();
+      }
+    }, 1000);
+
+ /*   function endGame() {
+      let winnerMessage = '';
+      if (player1Score > player2Score) {
+        winnerMessage = '¡Jugador 1 gana!';
+      } else if (player2Score > player1Score) {
+        winnerMessage = '¡Jugador 2 gana!';
+      } else {
+        winnerMessage = '¡Es un empate!';
+      }
+
+      document.getElementById('winnerMessage').textContent = winnerMessage;
+      document.getElementById('winnerMessage').style.display = 'block';
+      backgroundSound.stop();
+      hitSound.stop();
+    }*/
+
+
+function endGame() {
+
+  const player1Points = parseInt(document.getElementById('player1Points').innerText);
+  const player2Points = parseInt(document.getElementById('player2Points').innerText);
+  let winnerPoints;
+
+  if (player1Points > player2Points) {
+    winnerPoints = player1Points;
+    document.getElementById('winnerMessage').innerText = `¡Jugador 1 es el ganador con ${player1Points} puntos!`;
+  } else if (player2Points > player1Points) {
+    winnerPoints = player2Points;
+    document.getElementById('winnerMessage').innerText = `¡Jugador 2 es el ganador con ${player2Points} puntos!`;
+  } else if (player1Points==0) {
+    document.getElementById('winnerMessage').innerText = `¡Jugador 2 es el ganador!`;
+  }  else {
+    document.getElementById('winnerMessage').innerText = `¡Es un empate con ${player1Points} puntos cada uno!`;
+    return;  // No mostrar botón de login en caso de empate
+  }
+
+  document.getElementById('winnerMessage').style.display = 'block';
+  document.getElementById('button-login').style.display = 'block';
+}
+
+
+
+    function writeUserData(userId, email, score) {
+  const db = getDatabase();
+  set(ref(db, 'users/' + userId), {
+    email: email,
+    score: score
+  });
+}
+
+  </script>
+  <script src="script.js"></script>
+</body>
+
+</html>

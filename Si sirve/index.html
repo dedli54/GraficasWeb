@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu de Inicio</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="menuPage">
+<div class="menu">
+  <img src="imgs/dodgeball logo2.png" alt="Logo" class="logo" >
+  <br>
+  <div class="menu-buttons">
+    <button class="button" onclick="openSettings()">Configuraciones</button>
+    <button class="button" onclick="showLevelSelection()">Iniciar</button>
+    <button class="button" onclick="openScores()">Puntuaciones</button>
+  </div>
+  <br>
+  <img src="imgs/credit.png" alt="Created by: Oscar Eliezer Rodríguez Saldívar & Ana Cecilia Lopéz Villagrán"
+  class="credit">
+  
+</div>
+</div>
+
+<div id="gamePage" class="hide">
+    <!-- Contenedor de la imagen con botón de pausa -->
+    
+    </div>
+    
+
+  </div>
+
+  <div id="settingsPage" class="hide">
+    <p>Configuraciones del juego</p>
+    <label class="container">Mutear sonido
+      <input type="checkbox" id="muteCheckbox" onchange="isSoundMuted()">
+      <span class="checkmark"></span>
+  </label>
+  
+    <button class="button" onclick="backToMenu()">Volver al Menú</button>
+  </div>
+  
+<div id="facebooktable" class="hide">
+  <table id="publicationsTable">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Mensaje</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+<div id="puntuaciones" class="hide">
+  <h2 id="tablaP">Tabla de Puntuaciones</h2>
+  <table id="tablaNombres">
+    <tr id="impar">
+      <th>Nombre</th>
+      <th id="pun">Puntuaciones</th>
+    </tr>
+  </table>
+  <button id="buttonHome" onclick="backToMenuScore()">Volver al Menú</button>
+</div>
+  
+  <div id="levelSelection" class="hide">
+    <h2>Selecciona un nivel</h2>
+    <button class="button" onclick="startLevel('level1')">Nivel 1 Facil</button>
+    <button class="button" onclick="startLevel('level1h')">Nivel 1 Hard</button>
+    <button class="button" onclick="startLevel('level2')">Nivel 2 Facil</button>
+    <button class="button" onclick="startLevel('level2h')">Nivel 2 Hard</button>
+    <button class="button" onclick="startLevel('level3')">Nivel 3 Facil</button>
+    <button class="button" onclick="startLevel('level3h')">Nivel 3 Hard</button>
+  </div>
+  <button id="bottomLeftButton" onclick="showfacebook()">Facebook</button>
+  <script>
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: "337605202589152",
+        xfbml: true,
+        version: "v19.0",
+      });
+
+      // Función para obtener publicaciones
+      FB.api(
+        "/562969574152852/posts",
+        "GET",
+        {
+          access_token: "EAAFSUMXIHMoBOxSlRVqjZA132hsSk0LGreiZBkUQG0vwAaN1EkHMfHb36ZBl1On0HXkYiNRqMyRGqeo4rm9SVymqfEiVpZBCv8yHceEDWx28uZB49PIZAkjx5YMJyIllcobimGz52YwZCrcyu0mqUO9ymWVqzDZCfUPtgFKy7He3zKPZBYHmtkKM6BpLaCYzE3dpZAffVZBTUZAF6wmbldaJkLqWZAtEj",
+        },
+        function (response) {
+          if (response && !response.error) {
+            const publicationsTable = document.getElementById("publicationsTable").getElementsByTagName('tbody')[0];
+            response.data.forEach(publication => {
+              const newRow = publicationsTable.insertRow();
+              const dateCell = newRow.insertCell(0);
+              const messageCell = newRow.insertCell(1);
+              dateCell.innerHTML = publication.created_time;
+              messageCell.innerHTML = publication.message;
+            });
+          } else {
+            console.error("Error al obtener publicaciones", response.error);
+          }
+        }
+      );
+    };
+
+    // Función para publicar en la página
+  </script>
+  <script
+    async
+    defer
+    crossorigin="anonymous"
+    src="https://connect.facebook.net/en_US/sdk.js"
+  ></script>
+<script src="script.js"></script>
+
+</body>
+</html>
