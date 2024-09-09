@@ -10,7 +10,7 @@
 <div id="menuPage">
 <div class="menu">
 
-  <h1 style="color: white ;">Quemados</h1>
+  <h1>Quemados</h1>
   
   <br>
   <div class="menu-buttons">
@@ -70,14 +70,24 @@
 </div>
   
   <div id="levelSelection" class="hide">
-    <h2 style="color: white; background-color: black; display: inline;">Selecciona un nivel</h2>
+    <h2>Selecciona un nivel</h2>
     <br>
     <button class="button" onclick="startLevel('level1')">Nivel 1 Facil</button>
-    <button class="button" onclick="startLevel('level1h')">Nivel 1 Hard</button>
+    <button class="button" onclick="startLevel('0')">Nivel 1 Hard</button>
+    <button class="button" onclick="startLevel('0')">Nivel 2 Facil</button>
+    <button class="button" onclick="startLevel('0')">Nivel 2 Hard</button>
+    <button class="button" onclick="startLevel('0')">Nivel 3 Facil</button>
+    <button class="button" onclick="startLevel('0')">Nivel 3 Hard</button>
+
+    <button id="buttonHome" onclick="backToMenuScore()">Volver al Menú</button>
+  <!--
+    <button class="button" onclick="startLevel('level1')">Nivel 1 Facil</button>
+    <button class="button" onclick="startLevel('level1h')">Nivel 1 Hard</button>    asi es como esta de forma correcta
     <button class="button" onclick="startLevel('level2')">Nivel 2 Facil</button>
     <button class="button" onclick="startLevel('level2h')">Nivel 2 Hard</button>
     <button class="button" onclick="startLevel('level3')">Nivel 3 Facil</button>
     <button class="button" onclick="startLevel('level3h')">Nivel 3 Hard</button>
+-->
   </div>
   <!--
   <button id="bottomLeftButton" onclick="showfacebook()">Facebook</button>
